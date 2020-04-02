@@ -28,49 +28,88 @@ class Main7Activity : AppCompatActivity(), ItemRowListener{
     var itemListener: ValueEventListener = object : ValueEventListener {
         override fun onDataChange(p0: DataSnapshot) {
             val event_name = getIntent().getExtras()!!.getString("event_name")
-            val student = p0.child("student").children.iterator()
-            val c_event = p0.child("event_item").children.iterator()
-            // Check if current database contains any collection
-//            if (student.hasNext()) {
-                while (student.hasNext()) {
-                    val add_event = add_event.create()
-                    val event = event.create()
-                    val studentItem = student.next().getValue() as HashMap<String, Any>
-                    if (c_event.hasNext()){
-                        val eventItem = c_event.next().getValue() as HashMap<String, Any>
-                        if (eventItem.get("user_id")==studentItem.get("id") && eventItem.get("event_name") == event_name){
-                            add_event.id = studentItem.get("id") as String?
-                            add_event.name = studentItem.get("name") as String?
-                            add_event.done = eventItem.get("done") as Boolean?
-                            add_event.objectId = eventItem.get("objectId") as String?
-                        }else{
-                            val newItem = mDatabase.child("event_item").push()
-                            add_event.id = studentItem.get("id") as String?
-                            add_event.name = studentItem.get("name") as String?
-                            event.event_name = event_name
-                            event.done = false
-                            event.objectId = newItem.key
-                            event.user_id = studentItem.get("id") as String?
-                            add_event.done = false
-                            add_event.objectId = newItem.key
-                            newItem.setValue(event)
+            FirebaseDatabase.getInstance().getReference("student")
+                .addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(dataSnapshot: DataSnapshot) {
+                        val studentItem = dataSnapshot.children.iterator()
+                        var i=0
+                        if(studentItem.hasNext()) {
+                            while (studentItem.hasNext()) {
+                                val studentItem =
+                                    studentItem.next().getValue() as HashMap<String, Any>
+                                FirebaseDatabase.getInstance().getReference("event_item").orderByChild("user_id")
+                                    .equalTo(studentItem.get("id") as String)
+                                    .addListenerForSingleValueEvent(object : ValueEventListener {
+                                        override fun onDataChange(p0: DataSnapshot) {
+                                            val add_event = add_event.create()
+                                            val event_item = p0.children.iterator()
+                                            if(event_item.hasNext()){
+                                                while (event_item.hasNext()){
+                                                    val event_item = event_item.next().getValue() as HashMap<String, Any>
+                                                    if(event_item.get("event_name")==event_name){
+                                                        add_event.id = studentItem.get("id") as String?
+                                                        add_event.name = studentItem.get("name") as String?
+                                                        add_event.done = event_item.get("done") as Boolean?
+                                                        add_event.objectId = event_item.get("objectId") as String?
+                                                        i+=1
+                                                        toDoItemList!!.add(add_event)
+                                                    }
+                                                }
+                                                if(i==0){
+                                                    val event = event.create()
+                                                    val newItem = mDatabase.child("event_item").push()
+                                                    event.event_name = event_name
+                                                    event.done = false
+                                                    event.objectId = newItem.key
+                                                    event.user_id = studentItem.get("id") as String?
+                                                    add_event.id = studentItem.get("id") as String?
+                                                    add_event.name = studentItem.get("name") as String?
+                                                    add_event.done = false
+                                                    add_event.objectId = newItem.key
+                                                    newItem.setValue(event)
+                                                    toDoItemList!!.add(add_event)
+                                                }
+                                                adapter.notifyDataSetChanged()
+                                            }
+                                            else{
+                                                val event = event.create()
+                                                val newItem = mDatabase.child("event_item").push()
+                                                event.event_name = event_name
+                                                event.done = false
+                                                event.objectId = newItem.key
+                                                event.user_id = studentItem.get("id") as String?
+                                                add_event.id = studentItem.get("id") as String?
+                                                add_event.name = studentItem.get("name") as String?
+                                                add_event.done = false
+                                                add_event.objectId = newItem.key
+                                                newItem.setValue(event)
+                                                toDoItemList!!.add(add_event)
+                                                adapter.notifyDataSetChanged()
+                                            }
+                                        }
+                                        override fun onCancelled(p0: DatabaseError) {
+//                                            val add_event = add_event.create()
+//                                            val event = event.create()
+//                                            val newItem = mDatabase.child("event_item").push()
+//                                            event.event_name = event_name
+//                                            event.done = false
+//                                            event.objectId = newItem.key
+//                                            event.user_id = studentItem.get("id") as String?
+//                                            add_event.id = studentItem.get("id") as String?
+//                                            add_event.name = studentItem.get("name") as String?
+//                                            add_event.done = false
+//                                            add_event.objectId = newItem.key
+//                                            newItem.setValue(event)
+//                                            toDoItemList!!.add(add_event)
+//                                            adapter.notifyDataSetChanged()
+                                        }
+                                    })
+                            }
                         }
-                    }else{
-                        val newItem = mDatabase.child("event_item").push()
-                        add_event.id = studentItem.get("id") as String?
-                        add_event.name = studentItem.get("name") as String?
-                        event.event_name = event_name
-                        event.done = false
-                        event.objectId = newItem.key
-                        event.user_id = studentItem.get("id") as String?
-                        add_event.done = false
-                        add_event.objectId = newItem.key
-                        newItem.setValue(event)
                     }
-                    toDoItemList!!.add(add_event)
-                }
-                adapter.notifyDataSetChanged()
-//            }
+                    override fun onCancelled(databaseError: DatabaseError) {
+                    }
+                })
         }
         override fun onCancelled(p0: DatabaseError) {
 

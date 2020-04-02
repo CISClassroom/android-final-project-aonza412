@@ -34,6 +34,7 @@ class Main5Activity : AppCompatActivity() {
             Toast.makeText(this,selectedItem.event_name, Toast.LENGTH_SHORT).show()
             val intent = Intent(this, Main6Activity::class.java)
             intent.putExtra("objectId",selectedItem.objectId)
+            intent.putExtra("event_name",selectedItem.event_name)
             startActivity(intent)
         }
     }

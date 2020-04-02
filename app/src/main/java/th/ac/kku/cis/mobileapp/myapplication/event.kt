@@ -15,6 +15,8 @@ class event_data {
     }
     var event_name: String? = null
     var event_detail: String? = null
+    var event_unit: String? = null
+    var event_side: String? = null
     var objectId: String? = null
     var date_start: String? = null
     var date_end: String? = null
